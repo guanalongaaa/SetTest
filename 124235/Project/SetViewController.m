@@ -12,10 +12,15 @@
 //语言设置
 #import "SettingLanguageViewController.h"
 #import "UIHelper.h"
+//06.16 缓存
+#import "SDImageCache.h"
 
 @interface SetViewController ()<UINavigationControllerDelegate>
 @property (nonatomic, strong) UISwitch *setSwitch;
 @property (nonatomic, strong) UISwitch *showSwitch;
+//显示.
+@property (nonatomic, retain) MBProgressHUD *hud;
+
 @end
 
 @implementation SetViewController
@@ -35,18 +40,28 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.title = @"设置";
-    
+    self.title = @"首页";
     [self initContentArray];
     // Do any additional setup after loading the view.
 }
 
 -(void)viewWillAppear:(BOOL)animated
 {
+    //05.16 add
+    if (!self.navigationItem.rightBarButtonItem) {
+        self.navigationItem.rightBarButtonItem = [UIHelper navBarButtonWithTitle:LOCALIZEDSTRING(@"刷新") target:self action:@selector(reFreshButtonClick:)];
+    }
+
     self.title = @"设置";
     [super viewWillAppear:animated];
     [self initContentArray];
     [self.tableView reloadData];
 }
+
+-(void)reFreshButtonClick:(id)sender{
+    NSLog(@"刷新");
+}
+
 
 #pragma mark - UITableView DateSource Methods
 -(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
@@ -166,7 +181,9 @@
     }
     //第三个分组
     else if (indexPath.section == 2) {
-        //隐私设置
+        //
+        // 清理缓存
+        [self showClearCache];
     }
     //第四个分组
     else if (indexPath.section == 3) {
@@ -188,6 +205,72 @@
     
     [[NSNotificationCenter defaultCenter] postNotificationName:kGOCOMLanguageChangedNote object:nil];
     
+}
+
+//05.16 缓存
+-(void)showClearCache
+{
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
+    NSString *path = [paths lastObject];
+    NSString *str = [NSString stringWithFormat:@"清除缓存%.1fM", [self folderSizeAtPath:path]];
+    NSLog(@"%@",str);
+    //删除缓存
+    [self removeCache];
+//    [self showPromptText:str hideAfterDelay:1.7];
+    
+    
+    self.hud = [MBProgressHUD showHUDAddedTo:self.view animated:YES];
+    self.hud.mode = MBProgressHUDModeText;
+    self.hud.labelText = str;
+    [self.hud hide:YES afterDelay:2.0f];
+
+}
+
+//清理缓存的方法
+-(float)fileSizeAtPath:(NSString *)path{
+    NSFileManager *fileManager=[NSFileManager defaultManager];
+    if([fileManager fileExistsAtPath:path]){
+        long long size=[fileManager attributesOfItemAtPath:path error:nil].fileSize;
+        return size/1024.0/1024.0;
+    }
+    return 0;
+}
+
+
+//遍历文件夹获得文件夹大小，返回多少M
+- (float ) folderSizeAtPath:(NSString*) folderPath{
+    NSFileManager* manager = [NSFileManager defaultManager];
+    
+    float folderSize;
+    if ([manager fileExistsAtPath:folderPath]) {
+        NSArray *childerFiles=[manager subpathsAtPath:folderPath];
+        for (NSString *fileName in childerFiles) {
+            NSString *absolutePath=[folderPath stringByAppendingPathComponent:fileName];
+            folderSize +=[self fileSizeAtPath:absolutePath];
+        }
+        //SDWebImage框架自身计算缓存的实现
+        folderSize +=[[SDImageCache sharedImageCache] getSize]/1024.0/1024.0;
+        return folderSize;
+    }
+    return 0;
+    
+}
+
+-(void)removeCache
+{
+    //===============清除缓存==============
+    NSString *cachePath = [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) objectAtIndex:0];
+    NSArray *files = [[NSFileManager defaultManager] subpathsAtPath:cachePath];
+    NSLog(@"文件数 ：%lu",(unsigned long)[files count]);
+    for (NSString *p in files)
+    {
+        NSError *error;
+        NSString *path = [cachePath stringByAppendingString:[NSString stringWithFormat:@"/%@",p]];
+        if([[NSFileManager defaultManager] fileExistsAtPath:path])
+        {
+            [[NSFileManager defaultManager] removeItemAtPath:path error:&error];
+        }
+    }
 }
 
 
@@ -212,8 +295,8 @@
     //常规
     NSArray *secondSectionArray  = @[[self cellInfoWithTitle:@"图像传输" detail:[self selectedValue]],[self cellInfoWithTitle:@"聊天背景" detail:nil],[self cellInfoWithTitle:@"聊天字体大小" detail:nil],[self cellInfoWithTitle:@"清空聊天记录" detail:nil],[self cellInfoWithTitle:@"摇一摇清空未读消息" detail:nil]];
     
-    //隐私
-    NSArray *clearRecordArray = @[[self cellInfoWithTitle:@"隐私" detail:nil]];
+    //清除缓存
+    NSArray *clearRecordArray = @[[self cellInfoWithTitle:@"缓存清除" detail:nil]];
     
     //多语言
     NSArray *languageArray = @[[self cellInfoWithTitle:@"多语言" detail:[del languageDisplayNameFromUserDefaults]]];
