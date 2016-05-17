@@ -10,8 +10,6 @@
 
 //第一控制器
 #import "ViewController.h"
-//第三控制器
-#import "ProtalViewController.h"
 //第四控制器
 #import "SetViewController.h"
 
@@ -25,12 +23,7 @@
 
 AppDelegate *del;
 
-@interface AppDelegate ()<UITabBarControllerDelegate>
-
-//05.17 新建控制器
-{
-    UITabBarController *tabBarControllerMain;
-}
+@interface AppDelegate ()
 
 @property (nonatomic, retain) MBProgressHUD *hud;
 
@@ -47,17 +40,13 @@ AppDelegate *del;
     if(_tabBarController == nil)
     {
         
+        
         //首页控制器
         ViewController *firstVC = [[ViewController alloc]initWithNibName:nil bundle:nil];
         UINavigationController *firstNav = [[UINavigationController alloc]initWithRootViewController:firstVC navigationBarBackgroundImage:nil];
         [firstNav enabledMLBlackTransition:YES];
         firstNav.navigationBar.disableMLBlackTransition = YES;
 
-        //视图控制器
-        ProtalViewController *ProtalVC = [[ProtalViewController alloc]initWithNibName:nil bundle:nil];
-        UINavigationController *ProtalNav = [[UINavigationController alloc]initWithRootViewController:ProtalVC navigationBarBackgroundImage:nil];
-        [ProtalNav enabledMLBlackTransition:YES];
-        ProtalNav.navigationBar.disableMLBlackTransition = YES;
         
         //设置控制器
         SetViewController *setVC = [[SetViewController alloc]initWithNibName:nil bundle:nil];
@@ -71,10 +60,9 @@ AppDelegate *del;
         firstNav.tabBarItem.image = [UIImage imageNamed:@"Unknown.png"];
         firstNav.tabBarItem.selectedImage = [UIImage imageNamed:@"Unknown-1.png"];
         
-        ProtalNav.tabBarItem.title = @"视图";
-        ProtalNav.tabBarItem.image = [UIImage imageNamed:@"Unknown.png"];
-        ProtalNav.tabBarItem.selectedImage = [UIImage imageNamed:@"Unknown-1.png"];
-        
+//        setVC.tabBarItem.title = @"应用中心";
+//        setVC.tabBarItem.image = [UIImage imageNamed:@"yingyong_btn"];
+//        setVC.tabBarItem.selectedImage = [UIImage imageNamed:@"yingyong_btn_hover.png"];
         
         setNav.tabBarItem.title = @"设置";
         setNav.tabBarItem.image = [UIImage imageNamed:@"Unknown-2.png"];
@@ -82,8 +70,10 @@ AppDelegate *del;
         
         UITabBarController *tabBarController = [[UITabBarController alloc] init];
         [tabBarController addChildViewController:firstNav];
-        [tabBarController addChildViewController:ProtalNav];
         [tabBarController addChildViewController:setNav];
+//        [tabBarController addChildViewController:appNav];
+//        //工作圈
+//        //[tabBarController addChildViewController:workNav];
         
         tabBarController.tabBar.selectedImageTintColor = [UIColor colorWithRed:80/255.0 green:134/255.0 blue:192/255.0 alpha:1];
 //        tabBarController.tabBar.barTintColor = [UIColor whiteColor];
@@ -125,11 +115,6 @@ AppDelegate *del;
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
     
     //设置主视图控制器
-    
-    //05.17 修改
-    [self loadTabVC];
-//    self.window.rootViewController = tabBarControllerMain;
-    
     [self.window setRootViewController:self.tabBarController];
     // Override point for customization after application launch.
     self.window.backgroundColor = [UIColor whiteColor];
@@ -205,73 +190,6 @@ AppDelegate *del;
     [[NSUserDefaults standardUserDefaults] synchronize];
 }
 
-
-
-
-
-- (void) loadTabVC {
-    //home page
-    
-    NSMutableDictionary *tabAttrs = [NSMutableDictionary dictionaryWithCapacity: 3];
-    tabAttrs[@"tabTitle"] = @"首页";
-    tabAttrs[@"title"] = @"首页";
-    tabAttrs[@"itemNormal"] = @"Unknown.png";
-    tabAttrs[@"itemSelected"] = @"Unknown-1.png";
-    tabAttrs[@"rootVC"] = @"ViewController";
-    UINavigationController *homeNavVC = [self tabNavVCWithAttr: tabAttrs];
-    //    self.MyNav = homeNavVC;
-    //found page
-    tabAttrs[@"tabTitle"] = @"视图";
-    tabAttrs[@"title"] = @"视图";
-    tabAttrs[@"itemNormal"] = @"Unknown.png";
-    tabAttrs[@"itemSelected"] = @"Unknown-1.png";
-    tabAttrs[@"rootVC"] = @"ProtalViewController";
-    UINavigationController *gouCaiNavVC = [self tabNavVCWithAttr: tabAttrs];
-    //provide page
-    tabAttrs[@"tabTitle"] = @"设置";
-    tabAttrs[@"title"] = @"设置";
-    tabAttrs[@"itemNormal"] = @"Unknown-2.png";
-    tabAttrs[@"itemSelected"] = @"Unknown-3.png";
-    tabAttrs[@"rootVC"] = @"SetViewController";
-    UINavigationController *faXianNavVC = [self tabNavVCWithAttr: tabAttrs];
-    
-    tabBarControllerMain = [[UITabBarController alloc] init];
-    tabBarControllerMain.viewControllers = @[homeNavVC, gouCaiNavVC, faXianNavVC];
-    tabBarControllerMain.view.frame = CGRectMake(0, 0, self.window.bounds.size.width, self.window.bounds.size.height);
-    tabBarControllerMain.delegate = self;
-    tabBarControllerMain.view.backgroundColor = [UIColor clearColor];
-    tabBarControllerMain.tabBar.barStyle = UIBarStyleBlackOpaque;
-    tabBarControllerMain.tabBar.barTintColor = [UIColor whiteColor];
-    tabBarControllerMain.delegate = self;
-}
-
-
-
-
-//05.17 change
-- (UINavigationController *) tabNavVCWithAttr: (NSDictionary*) attrs {
-    UIImage *normalImage = [[UIImage imageNamed: attrs[@"itemNormal"]] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
-    UIImage *selectedImage = [[UIImage imageNamed: attrs[@"itemSelected"]] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
-    
-    UITabBarItem *tabBarItem = [[UITabBarItem alloc] initWithTitle: attrs[@"tabTitle"] image: normalImage selectedImage: selectedImage];
-    NSDictionary *normalAttributes = @{NSFontAttributeName: [UIFont systemFontOfSize:12], NSForegroundColorAttributeName: [UIColor blackColor]};
-    [tabBarItem setTitleTextAttributes: normalAttributes forState:UIControlStateNormal];
-    
-    NSDictionary *selectedAttributes = @{NSFontAttributeName: [UIFont systemFontOfSize:12], NSForegroundColorAttributeName: [UIColor redColor]};
-    [tabBarItem setTitleTextAttributes: selectedAttributes forState:UIControlStateSelected];
-    NSString *rootVCClassName = attrs[@"rootVC"];
-    UIViewController *rootVC = [[NSClassFromString(rootVCClassName) alloc] initWithNibName: rootVCClassName bundle: nil];
-    rootVC.title = attrs[@"title"];
-    UINavigationController *navVC = [[UINavigationController alloc] initWithRootViewController: rootVC];
-//    navVC.navigationBar.barTintColor = RGBCOLOR(225, 91, 50);
-    
-    navVC.tabBarItem = tabBarItem;
-    //navtigation bar title color
-    
-    navVC.navigationBar.titleTextAttributes = @{NSForegroundColorAttributeName: [UIColor whiteColor], NSFontAttributeName: [UIFont boldSystemFontOfSize:20]};
-    navVC.navigationBar.tintColor = [UIColor whiteColor];
-    return navVC;
-}
 
 
 @end
